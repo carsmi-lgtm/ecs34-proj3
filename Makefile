@@ -1,7 +1,9 @@
+# tools
 AR=ar
 CC=gcc
 CXX=g++
 
+# directories
 INC_DIR = ./include
 SRC_DIR = ./src
 BIN_DIR = ./bin
@@ -12,6 +14,7 @@ TESTOBJ_DIR = ./testobj
 TESTBIN_DIR = ./testbin
 TESTCOVER_DIR = ./htmlconv
 
+#flags
 PKGS = expat
 DEFINES =
 INCLUDES += -I $(INC_DIR)
@@ -30,6 +33,7 @@ TEST_OBJ_FILES_STRDTASRC = $(TESTOBJ_DIR)/StringDataSourceTest.o $(TESTOBJ_DIR)/
 TEST_OBJ_FILES_STRDTASINK = $(TESTOBJ_DIR)/StringDataSinkTest.o $(TESTOBJ_DIR)/StringDataSink.o
 TEST_OBJ_FILES_DSV = $(TESTOBJ_DIR)/DSVTest.o $(TESTOBJ_DIR)/DSVReader.o $(TESTOBJ_DIR)/DSVWriter.o $(TESTOBJ_DIR)/StringDataSource.o $(TESTOBJ_DIR)/StringDataSink.o
 TEST_OBJ_FILES_XML = $(TESTOBJ_DIR)/XMLTest.o $(TESTOBJ_DIR)/XMLReader.o $(TESTOBJ_DIR)/XMLWriter.o $(TESTOBJ_DIR)/StringDataSource.o $(TESTOBJ_DIR)/StringDataSink.o
+TEST_OBJ_FILES_CSVBS = $(TESTOBJ_DIR)/StringDataSource.o $(TESTOBJ_DIR)/DSVReader.o $(TESTOBJ_DIR)/CSVBusSystem.o $(TESTOBJ_DIR)/CSVBusSystemTest.o
 
 # test executables
 TEST_TARGET_STRUTILS = $(TESTBIN_DIR)/teststrutils
@@ -37,20 +41,35 @@ TEST_TARGET_STRDTASRC = $(TESTBIN_DIR)/teststrdatasource
 TEST_TARGET_STRDTASINK = $(TESTBIN_DIR)/teststrdatasink
 TEST_TARGET_DSV = $(TESTBIN_DIR)/testdsv
 TEST_TARGET_XML = $(TESTBIN_DIR)/testxml
+TEST_TARGET_CSVBS = $(TESTBIN_DIR)/testcsvbs
 
-TEST_TARGETS = $(TEST_TARGET_STRUTILS) $(TEST_TARGET_STRDTASRC) $(TEST_TARGET_STRDTASINK) $(TEST_TARGET_DSV) $(TEST_TARGET_XML)
 
-all: directories runtests
+all: directories run_strtest run_strsrctest run_strsinktest run_dsvtest run_xmltest run_csvbstest gencoverage
 
-runtests: $(TEST_TARGETS)
-	@for test in $(TEST_TARGETS); do \
-		echo "Running $$test..."; \
-		$$test; \
-	done
+run_strtest: $(TEST_TARGET_STRUTILS)
+	$(TEST_TARGET_STRUTILS)
 
+run_strsrctest: $(TEST_TARGET_STRDTASRC)
+	$(TEST_TARGET_STRDTASINK)
+
+run_strsinktest: $(TEST_TARGET_STRDTASINK)
+	$(TEST_TARGET_STRDTASINK)
+
+run_dsvtest: $(TEST_TARGET_DSV)
+	$(TEST_TARGET_DSV)
+
+run_xmltest: $(TEST_TARGET_XML)
+	$(TEST_TARGET_XML)
+
+run_csvbstest: $(TEST_TARGET_CSVBS)
+	$(TEST_TARGET_CSVBS)
+
+gencoverage:
 	lcov --capture --directory . --output-file $(TESTCOVER_DIR)/coverage.info --ignore-errors inconsistent,source
 	lcov --remove $(TESTCOVER_DIR)/coverage.info '/usr/*' '*/testsrc/*' --output-file $(TESTCOVER_DIR)/coverage.info
 	genhtml $(TESTCOVER_DIR)/coverage.info --output-directory $(TESTCOVER_DIR)
+
+
 
 # link
 $(TEST_TARGET_STRUTILS): $(TEST_OBJ_FILES_STRUTILS)
@@ -68,53 +87,16 @@ $(TEST_TARGET_DSV): $(TEST_OBJ_FILES_DSV)
 $(TEST_TARGET_XML): $(TEST_OBJ_FILES_XML)
 	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_OBJ_FILES_XML) $(TEST_LDFLAGS) -o $(TEST_TARGET_XML)
 
+$(TEST_TARGET_CSVBS): $(TEST_OBJ_FILES_CSVBS)
+	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_OBJ_FILES_CSVBS) $(TEST_LDFLAGS) -o $(TEST_TARGET_CSVBS)
+
 
 # compile
-#
-# stringutils
-$(TESTOBJ_DIR)/StringUtils.o: $(SRC_DIR)/StringUtils.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(SRC_DIR)/StringUtils.cpp -o $(TESTOBJ_DIR)/StringUtils.o
+$(TESTOBJ_DIR)/%.o: $(TESTSRC_DIR)/%.cpp
+	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
-$(TESTOBJ_DIR)/StringUtilsTest.o: $(TESTSRC_DIR)/StringUtilsTest.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(TESTSRC_DIR)/StringUtilsTest.cpp -o $(TESTOBJ_DIR)/StringUtilsTest.o
-
-
-# stringdatasource
-$(TESTOBJ_DIR)/StringDataSource.o: $(SRC_DIR)/StringDataSource.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(SRC_DIR)/StringDataSource.cpp -o $(TESTOBJ_DIR)/StringDataSource.o
-
-$(TESTOBJ_DIR)/StringDataSourceTest.o: $(TESTSRC_DIR)/StringDataSourceTest.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(TESTSRC_DIR)/StringDataSourceTest.cpp -o $(TESTOBJ_DIR)/StringDataSourceTest.o
-
-
-# stringdatasink
-$(TESTOBJ_DIR)/StringDataSink.o: $(SRC_DIR)/StringDataSink.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(SRC_DIR)/StringDataSink.cpp -o $(TESTOBJ_DIR)/StringDataSink.o
-
-$(TESTOBJ_DIR)/StringDataSinkTest.o: $(TESTSRC_DIR)/StringDataSinkTest.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(TESTSRC_DIR)/StringDataSinkTest.cpp -o $(TESTOBJ_DIR)/StringDataSinkTest.o
-
-
-# DSV
-$(TESTOBJ_DIR)/DSVReader.o: $(SRC_DIR)/DSVReader.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(SRC_DIR)/DSVReader.cpp -o $(TESTOBJ_DIR)/DSVReader.o
-
-$(TESTOBJ_DIR)/DSVWriter.o: $(SRC_DIR)/DSVWriter.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(SRC_DIR)/DSVWriter.cpp -o $(TESTOBJ_DIR)/DSVWriter.o
-
-$(TESTOBJ_DIR)/DSVTest.o: $(TESTSRC_DIR)/DSVTest.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(TESTSRC_DIR)/DSVTest.cpp -o $(TESTOBJ_DIR)/DSVTest.o
-
-
-# XML
-$(TESTOBJ_DIR)/XMLReader.o: $(SRC_DIR)/XMLReader.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(SRC_DIR)/XMLReader.cpp -o $(TESTOBJ_DIR)/XMLReader.o
-
-$(TESTOBJ_DIR)/XMLWriter.o: $(SRC_DIR)/XMLWriter.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(SRC_DIR)/XMLWriter.cpp -o $(TESTOBJ_DIR)/XMLWriter.o
-
-$(TESTOBJ_DIR)/XMLTest.o: $(TESTSRC_DIR)/XMLTest.cpp | directories
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $(TESTSRC_DIR)/XMLTest.cpp -o $(TESTOBJ_DIR)/XMLTest.o
+$(TESTOBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 
 .PHONY: directories
