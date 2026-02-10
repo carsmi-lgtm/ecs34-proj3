@@ -92,11 +92,11 @@ $(TEST_TARGET_CSVBS): $(TEST_OBJ_FILES_CSVBS)
 
 
 # compile
-$(TESTOBJ_DIR)/%.o: $(TESTSRC_DIR)/%.cpp
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+$(TESTOBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | directories
+	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
-$(TESTOBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+$(TESTOBJ_DIR)/%.o: $(TESTSRC_DIR)/%.cpp | directories
+	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
 
 
 .PHONY: directories

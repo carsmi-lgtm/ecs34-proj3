@@ -43,24 +43,28 @@ struct CCSVBusSystem::SImplementation
 
         std::string Name() const noexcept
         {
-            return "";
+            return DName;
         }
 
         std::size_t StopCount() const noexcept
         {
-            return 0;
+            return DStopIDs.size();
         }
 
         TStopID GetStopID(std::size_t index) const noexcept
         {
-            return 0;
+            if (index >= DStopIDs.size())
+                return 0;
+            return DStopIDs[index];
         }
     };
 
+    // variables for header strings
     const std::string STOP_ID_HEADER = "stop_id";
     const std::string NODE_ID_HEADER = "node_id";
     const std::string ROUTE_ID_HEADER = "route";
 
+    // stops storage
     std::vector<std::shared_ptr<SStop>> DStopsByIndex;
     std::unordered_map<TStopID, std::shared_ptr<SStop>> DStopsByID;
 
@@ -68,28 +72,33 @@ struct CCSVBusSystem::SImplementation
     bool ReadStops(std::shared_ptr<CDSVReader> stopsrc)
     {
         std::vector<std::string> TempRow;
-        stopsrc->ReadRow(TempRow); // read header row
+        if (!stopsrc->ReadRow(TempRow))
+            return false; // read header row
 
-        if (stopsrc->ReadRow(TempRow))
-        { // read second row, start parsing
-            size_t StopColumn = -1;
-            size_t NodeColumn = -1;
+        else
+        { // set StopCol and NodeCol to -1, indicated not yet read
+            int StopCol = -1;
+            int NodeCol = -1;
 
-            // identify stop column and node column
+            // identify stop column and node column, return false if not read
             for (size_t Index = 0; Index < TempRow.size(); Index++)
             {
 
                 if (TempRow[Index] == STOP_ID_HEADER)
                 {
-                    StopColumn = Index;
+                    StopCol = Index;
                 }
                 else if (TempRow[Index] == NODE_ID_HEADER)
                 {
-                    NodeColumn = Index;
+                    NodeCol = Index;
                 }
             }
-            if (StopColumn == -1 || NodeColumn == -1)
+            if (StopCol == -1 || NodeCol == -1)
                 return false;
+
+            // cast StopColumn and NodeColumn to size_t
+            size_t StopColumn = static_cast<size_t>(StopCol);
+            size_t NodeColumn = static_cast<size_t>(NodeCol);
 
             // parse remaining rows into stops
             while (stopsrc->ReadRow(TempRow))
@@ -106,32 +115,41 @@ struct CCSVBusSystem::SImplementation
         return false;
     }
 
+    // routes storage
+    std::vector<std::shared_ptr<SRoute>> DRoutesByIndex;
+    std::unordered_map<std::string, std::shared_ptr<SRoute>> DRoutesByName;
+
     // csv read routes method
     bool ReadRoutes(std::shared_ptr<CDSVReader> routesrc)
     {
         std::vector<std::string> TempRow;
-        routesrc->ReadRow(TempRow); // read first row (header row)
+        if (!routesrc->ReadRow(TempRow))
+            return false; // read first row (header row)
 
-        if (routesrc->ReadRow(TempRow))
-        { // read second row, start parsing
-            size_t RouteColumn = -1;
-            size_t StopColumn = -1;
+        else
+        { // initiate to -1 indicating it hasn't been read
+            int RouteCol = -1;
+            int StopCol = -1;
 
-            // identify route and stop column
+            // identify route and stop column, return false if not read
             for (size_t Index = 0; Index < TempRow.size(); Index++)
             {
 
                 if (TempRow[Index] == ROUTE_ID_HEADER)
                 {
-                    RouteColumn = Index;
+                    RouteCol = Index;
                 }
                 else if (TempRow[Index] == STOP_ID_HEADER)
                 {
-                    StopColumn = Index;
+                    StopCol = Index;
                 }
             }
-            if (RouteColumn == -1 || StopColumn == -1)
+            if (RouteCol == -1 || StopCol == -1)
                 return false;
+
+            // cast RouteColumn and StopColumn to size_t
+            size_t RouteColumn = static_cast<size_t>(RouteCol);
+            size_t StopColumn = static_cast<size_t>(StopCol);
 
             std::unordered_map<std::string, std::shared_ptr<SRoute>> RoutesMap;
 
@@ -154,13 +172,16 @@ struct CCSVBusSystem::SImplementation
                 {
                     It->second->DStopIDs.push_back(StopID);
                 }
-
-                // NEED TO ADD moving routes into implementation storage
+            }
+            // move routes into storage
+            for (auto &Route : RoutesMap)
+            {
+                DRoutesByIndex.push_back(Route.second);
+                DRoutesByName[Route.first] = Route.second;
             }
 
             return true;
         }
-        return false;
     }
 
     // constructor
@@ -168,7 +189,7 @@ struct CCSVBusSystem::SImplementation
     {
         if (ReadStops(stopsrc))
         {
-            // add route reading here
+            ReadRoutes(routesrc);
         }
     }
 
@@ -180,7 +201,7 @@ struct CCSVBusSystem::SImplementation
     }
     std::size_t RouteCount() const noexcept
     {
-        return 0; // edit after implementing routes
+        return DRoutesByIndex.size(); // edit after implementing routes
     }
     std::shared_ptr<SStop> StopByIndex(std::size_t index) const noexcept
     {
@@ -197,11 +218,18 @@ struct CCSVBusSystem::SImplementation
     }
     std::shared_ptr<SRoute> RouteByIndex(std::size_t index) const noexcept
     {
-        return nullptr; // edit after implementing routes
+        if (index >= DRoutesByIndex.size())
+            return nullptr;
+        return DRoutesByIndex[index];
     }
     std::shared_ptr<SRoute> RouteByName(const std::string &name) const noexcept
     {
-        return nullptr; // edit after implementing routes
+        auto It = DRoutesByName.find(name);
+        if (It == DRoutesByName.end())
+        {
+            return nullptr;
+        }
+        return It->second;
     }
 };
 
