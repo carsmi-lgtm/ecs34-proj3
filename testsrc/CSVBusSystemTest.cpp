@@ -68,3 +68,32 @@ TEST(CSVBusSystem, InvalidHeaders)
     EXPECT_EQ(BadBusSystem.RouteByIndex(0), nullptr);
     EXPECT_EQ(BadBusSystem.RouteByName("A"), nullptr);
 }
+
+TEST(CSVBusSystem, InvalidParams)
+{
+    auto BadStopData = std::make_shared<CStringDataSource>("stop_id,node_id\n1,123\n2,124"); // valid headers
+    auto BadStopReader = std::make_shared<CDSVReader>(BadStopData);
+    auto BadRouteData = std::make_shared<CStringDataSource>("route,stop_id\nA,1\nA,2\nB,2\nC,2"); // valid headers
+    auto BadRouteReader = std::make_shared<CDSVReader>(BadRouteData);
+    CCSVBusSystem BadBusSystem(BadStopReader, BadRouteReader);
+
+    // test valid parameters first
+    auto Stop0 = BadBusSystem.StopByIndex(0);
+    ASSERT_NE(Stop0, nullptr);
+    EXPECT_EQ(Stop0->ID(), 1);
+    EXPECT_EQ(Stop0->NodeID(), 123);
+
+    auto RouteA = BadBusSystem.RouteByName("A");
+    ASSERT_NE(RouteA, nullptr);
+    EXPECT_EQ(RouteA->Name(), "A");
+    EXPECT_EQ(RouteA->StopCount(), 2);
+
+    EXPECT_EQ(BadBusSystem.StopCount(), 2);
+    EXPECT_EQ(BadBusSystem.RouteCount(), 3);
+
+    // test invalid parameters
+    EXPECT_EQ(BadBusSystem.StopByIndex(5), nullptr);
+    EXPECT_EQ(BadBusSystem.StopByID(300), nullptr);
+    EXPECT_EQ(BadBusSystem.RouteByIndex(10), nullptr);
+    EXPECT_EQ(BadBusSystem.RouteByName("D"), nullptr);
+}
