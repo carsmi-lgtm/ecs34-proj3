@@ -33,6 +33,10 @@ struct CCSVBusSystem::SImplementation
     // derived route struct
     struct SRoute : public CBusSystem::SRoute
     {
+    public:
+        // public data members
+        std::string DName;
+        std::vector<TStopID> DStopIDs;
 
         // destructor
         ~SRoute() override = default;
@@ -55,11 +59,12 @@ struct CCSVBusSystem::SImplementation
 
     const std::string STOP_ID_HEADER = "stop_id";
     const std::string NODE_ID_HEADER = "node_id";
+    const std::string ROUTE_ID_HEADER = "route";
 
     std::vector<std::shared_ptr<SStop>> DStopsByIndex;
     std::unordered_map<TStopID, std::shared_ptr<SStop>> DStopsByID;
 
-    // csv reading method
+    // csv reading stops method
     bool ReadStops(std::shared_ptr<CDSVReader> stopsrc)
     {
         std::vector<std::string> TempRow;
@@ -98,6 +103,63 @@ struct CCSVBusSystem::SImplementation
             return true;
         }
 
+        return false;
+    }
+
+    // csv read routes method
+    bool ReadRoutes(std::shared_ptr<CDSVReader> routesrc)
+    {
+        std::vector<std::string> TempRow;
+        routesrc->ReadRow(TempRow); // read first row (header row)
+
+        if (routesrc->ReadRow(TempRow))
+        { // read second row, start parsing
+            size_t RouteColumn = -1;
+            size_t StopColumn = -1;
+
+            // identify route and stop column
+            for (size_t Index = 0; Index < TempRow.size(); Index++)
+            {
+
+                if (TempRow[Index] == ROUTE_ID_HEADER)
+                {
+                    RouteColumn = Index;
+                }
+                else if (TempRow[Index] == STOP_ID_HEADER)
+                {
+                    StopColumn = Index;
+                }
+            }
+            if (RouteColumn == -1 || StopColumn == -1)
+                return false;
+
+            std::unordered_map<std::string, std::shared_ptr<SRoute>> RoutesMap;
+
+            // parse remaining rows into routes
+            while (routesrc->ReadRow(TempRow))
+            {
+                std::string RouteName = TempRow[RouteColumn];
+                TStopID StopID = std::stoull(TempRow[StopColumn]);
+
+                // check if route exists in map
+                auto It = RoutesMap.find(RouteName);
+                if (It == RoutesMap.end())
+                {
+                    auto NewRoute = std::make_shared<SRoute>();
+                    NewRoute->DName = RouteName;
+                    NewRoute->DStopIDs.push_back(StopID);
+                    RoutesMap[RouteName] = NewRoute;
+                }
+                else
+                {
+                    It->second->DStopIDs.push_back(StopID);
+                }
+
+                // NEED TO ADD moving routes into implementation storage
+            }
+
+            return true;
+        }
         return false;
     }
 
