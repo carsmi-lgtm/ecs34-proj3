@@ -16,6 +16,10 @@ CDSVReader::CDSVReader(std::shared_ptr< CDataSource > src, char delimiter) : DIm
     }
 }
 
+CDSVReader::CDSVReader(std::shared_ptr<CDataSource> src)
+    : CDSVReader(src, ',') {
+}
+
 CDSVReader::~CDSVReader() = default;
 
 bool CDSVReader::End() const{

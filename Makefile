@@ -18,12 +18,12 @@ TESTCOVER_DIR = ./htmlconv
 PKGS = expat
 DEFINES =
 INCLUDES += -I $(INC_DIR)
-CFLAGS += `pkg_config -cflags $(PKGS)`
+CFLAGS += `pkg-config -cflags $(PKGS)`
 CPPFLAGS += -std=c++20
-LDFLAGS = `pkg_config -libs $(PKGS)`
+LDFLAGS = `pkg-config -libs $(PKGS)`
 
 TEST_CFLAGS = $(CFLAGS) -O0 -g --coverage
-TEST_CPPFLAGS = $(CPPFLAGS) -fno-inline
+TEST_CPPFLAGS = $(CPPFLAGS) -fno-inline -Iinclude
 TEST_LDFLAGS = $(LDFLAGS) -lgtest_main -lgtest  -lpthread -lexpat
 
 
@@ -50,7 +50,7 @@ run_strtest: $(TEST_TARGET_STRUTILS)
 	$(TEST_TARGET_STRUTILS)
 
 run_strsrctest: $(TEST_TARGET_STRDTASRC)
-	$(TEST_TARGET_STRDTASINK)
+	$(TEST_TARGET_STRDTASRC)
 
 run_strsinktest: $(TEST_TARGET_STRDTASINK)
 	$(TEST_TARGET_STRDTASINK)

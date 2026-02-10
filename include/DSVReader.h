@@ -12,6 +12,7 @@ class CDSVReader{
 
     public:
         CDSVReader(std::shared_ptr< CDataSource > src, char delimiter);
+        CDSVReader(std::shared_ptr<CDataSource> src);
         ~CDSVReader();
 
         bool End() const;
