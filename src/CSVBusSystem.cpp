@@ -105,6 +105,10 @@ struct CCSVBusSystem::SImplementation
             {
                 TStopID StopID = std::stoull(TempRow[StopColumn]);
                 CStreetMap::TNodeID NodeID = std::stoull(TempRow[NodeColumn]);
+
+                if (DStopsByID.find(StopID) != DStopsByID.end()) // ignore duplicate stop ID
+                    continue;
+
                 auto NewStop = std::make_shared<SStop>(StopID, NodeID);
                 DStopsByIndex.push_back(NewStop);
                 DStopsByID[StopID] = NewStop;

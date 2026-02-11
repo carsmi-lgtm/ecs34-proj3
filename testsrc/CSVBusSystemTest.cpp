@@ -60,7 +60,7 @@ TEST(CSVBusSystem, InvalidHeaders)
     auto BadRouteReader = std::make_shared<CDSVReader>(BadRouteData);
     CCSVBusSystem BadBusSystem(BadStopReader, BadRouteReader);
 
-    // should all return 0 or nullptr because reader returns false after invalid headers are read
+    // reader returns false after invalid headers are read -> no data read, no stops or routes, all pointers null
     EXPECT_EQ(BadBusSystem.StopCount(), 0);
     EXPECT_EQ(BadBusSystem.RouteCount(), 0);
     EXPECT_EQ(BadBusSystem.StopByIndex(0), nullptr);
@@ -87,11 +87,12 @@ TEST(CSVBusSystem, InvalidParams)
     ASSERT_NE(RouteA, nullptr);
     EXPECT_EQ(RouteA->Name(), "A");
     EXPECT_EQ(RouteA->StopCount(), 2);
+    EXPECT_EQ(RouteA->GetStopID(1), 2);
 
     EXPECT_EQ(BadBusSystem.StopCount(), 2);
     EXPECT_EQ(BadBusSystem.RouteCount(), 3);
 
-    // test invalid parameters
+    // test invalid parameters: indices, ID's, and names that do not exist
     EXPECT_EQ(BadBusSystem.StopByIndex(5), nullptr);
     EXPECT_EQ(BadBusSystem.StopByID(300), nullptr);
     EXPECT_EQ(BadBusSystem.RouteByIndex(10), nullptr);
@@ -106,9 +107,10 @@ TEST(CSVBusSystem, EmptyFiles)
     auto EmptyRouteReader = std::make_shared<CDSVReader>(EmptyRouteData);
     CCSVBusSystem EmptyBusSystem(EmptyStopReader, EmptyRouteReader);
 
+    // no routes, no stops, all other pointers are null
     EXPECT_EQ(EmptyBusSystem.StopCount(), 0);
     EXPECT_EQ(EmptyBusSystem.StopByIndex(0), nullptr);
-    EXPECT_EQ(EmptyBusSystem.StopByID(000), nullptr);
+    EXPECT_EQ(EmptyBusSystem.StopByID(0), nullptr);
     EXPECT_EQ(EmptyBusSystem.RouteCount(), 0);
     EXPECT_EQ(EmptyBusSystem.RouteByIndex(0), nullptr);
     EXPECT_EQ(EmptyBusSystem.RouteByName("A"), nullptr);
@@ -121,5 +123,45 @@ TEST(CSVBusSystem, EmptyValues)
     auto RouteData = std::make_shared<CStringDataSource>("route,stop_id\nA,1\nB,2");
     auto RouteReader = std::make_shared<CDSVReader>(RouteData);
 
+    // should not construct bus system without correct data
     EXPECT_THROW(CCSVBusSystem(StopReader, RouteReader), std::invalid_argument);
+}
+
+TEST(CSVBusSystem, DuplicateStopID)
+{
+    auto StopData = std::make_shared<CStringDataSource>("stop_id,node_id\n1,111\n1,222\n1,333"); // three node id's for same stop
+    auto StopReader = std::make_shared<CDSVReader>(StopData);
+    auto RouteData = std::make_shared<CStringDataSource>("route,stop_id\nA,1\nB,1");
+    auto RouteReader = std::make_shared<CDSVReader>(RouteData);
+    CCSVBusSystem BusSystem(StopReader, RouteReader);
+
+    // only one stop should exist
+
+    EXPECT_EQ(BusSystem.StopCount(), 1);
+
+    auto StopObj1 = BusSystem.StopByIndex(0);
+    ASSERT_NE(StopObj1, nullptr);
+    EXPECT_EQ(StopObj1->NodeID(), 111);
+    EXPECT_NE(StopObj1->NodeID(), 333);
+    EXPECT_EQ(StopObj1->ID(), 1);
+
+    EXPECT_EQ(BusSystem.StopByIndex(1), nullptr);
+
+    auto StopObj2 = BusSystem.StopByID(1);
+    ASSERT_NE(StopObj2, nullptr);
+    EXPECT_EQ(StopObj2->NodeID(), 111);
+    EXPECT_NE(StopObj2->NodeID(), 333);
+    EXPECT_EQ(StopObj2->ID(), 1);
+
+    // routes should behave regularly
+
+    EXPECT_EQ(BusSystem.RouteCount(), 2);
+
+    auto RouteA = BusSystem.RouteByName("A");
+    ASSERT_NE(RouteA, nullptr);
+    EXPECT_EQ(RouteA->GetStopID(0), 1);
+
+    auto RouteB = BusSystem.RouteByName("B");
+    ASSERT_NE(RouteB, nullptr);
+    EXPECT_EQ(RouteB->GetStopID(0), 1);
 }
