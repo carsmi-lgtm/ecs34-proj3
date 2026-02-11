@@ -97,3 +97,29 @@ TEST(CSVBusSystem, InvalidParams)
     EXPECT_EQ(BadBusSystem.RouteByIndex(10), nullptr);
     EXPECT_EQ(BadBusSystem.RouteByName("D"), nullptr);
 }
+
+TEST(CSVBusSystem, EmptyFiles)
+{
+    auto EmptyStopData = std::make_shared<CStringDataSource>("stop_id,node_id\n"); // no data, only headers
+    auto EmptyStopReader = std::make_shared<CDSVReader>(EmptyStopData);
+    auto EmptyRouteData = std::make_shared<CStringDataSource>("route,stop_id\n"); // no data, only headers
+    auto EmptyRouteReader = std::make_shared<CDSVReader>(EmptyRouteData);
+    CCSVBusSystem EmptyBusSystem(EmptyStopReader, EmptyRouteReader);
+
+    EXPECT_EQ(EmptyBusSystem.StopCount(), 0);
+    EXPECT_EQ(EmptyBusSystem.StopByIndex(0), nullptr);
+    EXPECT_EQ(EmptyBusSystem.StopByID(000), nullptr);
+    EXPECT_EQ(EmptyBusSystem.RouteCount(), 0);
+    EXPECT_EQ(EmptyBusSystem.RouteByIndex(0), nullptr);
+    EXPECT_EQ(EmptyBusSystem.RouteByName("A"), nullptr);
+}
+
+TEST(CSVBusSystem, EmptyValues)
+{
+    auto StopData = std::make_shared<CStringDataSource>("stop_id,node_id\n1,\n2,"); // missing node ID
+    auto StopReader = std::make_shared<CDSVReader>(StopData);
+    auto RouteData = std::make_shared<CStringDataSource>("route,stop_id\nA,1\nB,2");
+    auto RouteReader = std::make_shared<CDSVReader>(RouteData);
+
+    EXPECT_THROW(CCSVBusSystem(StopReader, RouteReader), std::invalid_argument);
+}
