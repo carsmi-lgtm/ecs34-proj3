@@ -34,6 +34,7 @@ TEST_OBJ_FILES_STRDTASINK = $(TESTOBJ_DIR)/StringDataSinkTest.o $(TESTOBJ_DIR)/S
 TEST_OBJ_FILES_DSV = $(TESTOBJ_DIR)/DSVTest.o $(TESTOBJ_DIR)/DSVReader.o $(TESTOBJ_DIR)/DSVWriter.o $(TESTOBJ_DIR)/StringDataSource.o $(TESTOBJ_DIR)/StringDataSink.o
 TEST_OBJ_FILES_XML = $(TESTOBJ_DIR)/XMLTest.o $(TESTOBJ_DIR)/XMLReader.o $(TESTOBJ_DIR)/XMLWriter.o $(TESTOBJ_DIR)/StringDataSource.o $(TESTOBJ_DIR)/StringDataSink.o
 TEST_OBJ_FILES_CSVBS = $(TESTOBJ_DIR)/StringDataSource.o $(TESTOBJ_DIR)/DSVReader.o $(TESTOBJ_DIR)/CSVBusSystem.o $(TESTOBJ_DIR)/CSVBusSystemTest.o
+TEST_OBJ_FILES_OSM = $(TESTOBJ_DIR)/StringDataSource.o $(TESTOBJ_DIR)/XMLReader.o $(TESTOBJ_DIR)/OpenStreetMap.o $(TESTOBJ_DIR)/OpenStreetMapTest.o
 
 # test executables
 TEST_TARGET_STRUTILS = $(TESTBIN_DIR)/teststrutils
@@ -42,9 +43,10 @@ TEST_TARGET_STRDTASINK = $(TESTBIN_DIR)/teststrdatasink
 TEST_TARGET_DSV = $(TESTBIN_DIR)/testdsv
 TEST_TARGET_XML = $(TESTBIN_DIR)/testxml
 TEST_TARGET_CSVBS = $(TESTBIN_DIR)/testcsvbs
+TEST_TARGET_OSM = $(TESTBIN_DIR)/testosm
 
 
-all: directories run_strtest run_strsrctest run_strsinktest run_dsvtest run_xmltest run_csvbstest gencoverage
+all: directories run_strtest run_strsrctest run_strsinktest run_dsvtest run_xmltest run_csvbstest run_osmtest gencoverage 
 
 run_strtest: $(TEST_TARGET_STRUTILS)
 	$(TEST_TARGET_STRUTILS)
@@ -63,6 +65,9 @@ run_xmltest: $(TEST_TARGET_XML)
 
 run_csvbstest: $(TEST_TARGET_CSVBS)
 	$(TEST_TARGET_CSVBS)
+
+run_osmtest: $(TEST_TARGET_OSM)
+	$(TEST_TARGET_OSM)
 
 gencoverage:
 	lcov --capture --directory . --output-file $(TESTCOVER_DIR)/coverage.info --ignore-errors inconsistent,source
@@ -89,6 +94,9 @@ $(TEST_TARGET_XML): $(TEST_OBJ_FILES_XML)
 
 $(TEST_TARGET_CSVBS): $(TEST_OBJ_FILES_CSVBS)
 	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_OBJ_FILES_CSVBS) $(TEST_LDFLAGS) -o $(TEST_TARGET_CSVBS)
+
+$(TEST_TARGET_OSM): $(TEST_OBJ_FILES_OSM)
+	$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_OBJ_FILES_OSM) $(TEST_LDFLAGS) -o $(TEST_TARGET_OSM)
 
 
 # compile
